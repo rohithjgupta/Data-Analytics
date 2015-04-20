@@ -1,0 +1,66 @@
+getwd()
+
+d1 <- read.csv(file='iris_data.csv',header=TRUE,sep=",");
+
+d1 = iris[1:100,]
+d1
+
+require ("ggplot2")
+ggplot (d1, aes (x = Sepal.Length, y = Sepal.Width, colour = as.factor(Species))) + stat_density2d ()
+
+#==============================================================================================
+# Using all data as train and test set
+
+# Species is determined by independent attributes
+init_fit = glm(Species~., d1, family=binomial())
+init_fit
+summary(init_fit)
+
+# Predicting the dependent variable
+init_predict = predict(init_fit, d1[,-ncol(d1)], type="response")
+
+init_predict = as.data.frame(init_predict)
+d1_species = as.data.frame(d1[,ncol(d1)])
+
+
+d1_val_name = as.data.frame(c(init_predict, d1_species))  # Using this, we can set discriminant boundary as 0.5 to determine the class
+
+#============================================================================================== 
+
+ds = d1[sample(nrow(d1)),] # sample takes a random sample from the dataset, can be used for shuffling in a vector
+
+ds_train = ds[1:60,]   #train data of 60 samples
+# ds_train
+ds_test = ds[61:nrow(ds),]  #test data of 40 samples 
+# ds_test
+
+# Fit the model using training data
+logit_fit = glm(Species~., ds_train, family=binomial())
+logit_fit
+summary(logit_fit)
+
+logit_predict = predict(logit_fit, ds_test[,-5], type="response")
+# logit_predict = as.data.frame(logit_predict)
+
+
+pred_class = (matrix(c(ifelse(logit_predict>0.5, "versicolor", "setosa"))))
+# pred_class = (matrix(c(ifelse(logit_predict>0.5, "setosa", "versicolor"))))
+
+
+real_op = as.data.frame(ds_test[,5])
+
+real_pred = as.data.frame(cbind(real_op, pred_class))
+
+error = 0
+
+# Whenever the real prediction value differs from training set, we increment error count
+for(i in 1 : nrow(real_pred)){
+  if(as.numeric(real_pred[i,1]) != as.numeric(real_pred[i,2])){
+    error = error + 1
+  }
+}
+
+error
+
+
+
